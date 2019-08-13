@@ -4,6 +4,13 @@
 #include <boost/asio/ssl.hpp>
 #endif
 #include "crow/settings.h"
+
+#if BOOST_VERSION >= 107000
+#define GET_IO_SERVICE(s) ((boost::asio::io_context&)(s).get_executor().context())
+#else
+#define GET_IO_SERVICE(s) ((s).get_io_service())
+#endif
+
 namespace crow
 {
     using namespace boost;
@@ -19,7 +26,7 @@ namespace crow
 
         boost::asio::io_service& get_io_service()
         {
-            return socket_.get_io_service();
+            return GET_IO_SERVICE(socket_);
         }
 
         tcp::socket& raw_socket()
@@ -48,7 +55,7 @@ namespace crow
             socket_.close(ec);
         }
 
-        template <typename F> 
+        template <typename F>
         void start(F f)
         {
             f(boost::system::error_code());
@@ -99,7 +106,7 @@ namespace crow
             return raw_socket().get_io_service();
         }
 
-        template <typename F> 
+        template <typename F>
         void start(F f)
         {
             ssl_socket_->async_handshake(boost::asio::ssl::stream_base::server,
